@@ -53,10 +53,30 @@ models:
           - not_null
       - name: quantity
         description: Ordered quantity of this position.
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                inclusive: false
       - name: extended_price
         description: Gross price of the position before discount.
       - name: discount
         description: Discount on this position (fraction, e.g. 0.05 = 5%).
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 1
+      - name: tax
+        description: >
+          Tax rate on this position (fraction). Not part of net_amount (Part 3's formula is
+          tax-exclusive by design) — used for the tax-inclusive `charge` reconciliation in
+          tests/assert_order_total_matches_line_items.sql.
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 1
     data_tests:
       - dbt_utils.unique_combination_of_columns:
           arguments:

@@ -53,9 +53,29 @@ SQL runs — not that the result is correct. That's why we test against the actu
 
 ## Tests & docs
 
-Every model has at least `not_null`/`unique` on its primary key; FKs get `relationships` tests
-against the respective dimension/staging source. Descriptions live in the accompanying `_*.yml`
-files per folder.
+Two test types, matching the workshop's Part 4:
+
+- **Generic tests (YAML)** — column-level constraints and fixed relationships between two models:
+  `not_null`, `unique`, `relationships`, `accepted_values`, plus package tests like
+  `dbt_utils.unique_combination_of_columns`, `dbt_utils.accepted_range`, `dbt_utils.equal_rowcount`.
+  Declared in the `_*.yml` files next to each layer's models. Every model has at least
+  `not_null`/`unique` on its primary key; FKs get `relationships` tests against the respective
+  dimension/staging source.
+- **Singular tests (SQL)** — one-off `.sql` files under `tests/` for checks a generic test can't
+  express: aggregation across rows, business-formula reconciliation, gap detection. A query that
+  returns rows on failure, empty on success.
+- Before writing a singular test, check whether a generic/package test already covers it (e.g.
+  `dbt_utils.equal_rowcount` instead of a hand-rolled row-count comparison) — same
+  reuse-before-rebuild principle as the `net_amount` macro.
+- **`net_amount` is tax-exclusive by design; `order_total` (TPC-H `o_totalprice`) isn't.**
+  `stg_lineitem.tax` (`l_tax`) exists only to reconcile the two in
+  `tests/assert_order_total_matches_line_items.sql`, via the tax-inclusive `charge` formula
+  (`extended_price * (1 - discount) * (1 + tax)`) — not to feed `net_amount`/`fct_line_items`.
+  That test's tolerance (`> 0.20`) is tuned above the observed floating-point rounding noise from
+  summing multiple lines per order (max ~$0.11 across all 1.5M orders); a real defect (e.g. a
+  missing tax factor) shows up as a 3-8% gap, ~1000x larger.
+
+Descriptions live in the accompanying `_*.yml` files per folder.
 
 ## Commands
 

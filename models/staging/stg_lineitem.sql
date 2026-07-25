@@ -10,7 +10,8 @@ renamed as (
         l_suppkey       as supplier_id,
         l_quantity      as quantity,
         l_extendedprice as extended_price,
-        l_discount      as discount
+        l_discount      as discount,
+        l_tax           as tax
     from source
 )
 

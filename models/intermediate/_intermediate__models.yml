@@ -25,6 +25,9 @@ models:
             combination_of_columns:
               - order_id
               - line_number
+      - dbt_utils.equal_rowcount:
+          arguments:
+            compare_model: ref('stg_lineitem')
 
   - name: int_order_totals
     description: Aggregation of int_line_items_enriched at order grain (one row per order).
