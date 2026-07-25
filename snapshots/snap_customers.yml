@@ -1,0 +1,8 @@
+snapshots:
+  - name: snap_customers
+    relation: source('tpch', 'customer')
+    config:
+      schema: snapshots
+      unique_key: c_custkey
+      strategy: check
+      check_cols: ['c_mktsegment']

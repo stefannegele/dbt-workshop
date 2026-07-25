@@ -77,6 +77,18 @@ Two test types, matching the workshop's Part 4:
 
 Descriptions live in the accompanying `_*.yml` files per folder.
 
+## Snapshots
+
+`snapshots/snap_customers.yml` (Part 5, optional) snapshots `market_segment` as SCD Type 2 —
+demonstrates that overwriting a dimension value (Type 1) silently rewrites history for old facts.
+Snapshots the **raw source** (`source('tpch', 'customer')`), not `stg_customers`: decouples
+snapshot history from staging-logic changes, at the cost of raw column names (`c_custkey`,
+`c_mktsegment`) instead of Part 3's renamed ones. Uses the `check` strategy (TPC-H has no
+reliable updated-at column) on `c_mktsegment`. `config.schema` is the plain literal
+`snapshots`, not `{{ target.schema }}_snapshots` — dbt's default schema-naming already
+prepends `target.schema` to any custom schema automatically, so adding it again here would
+double-prefix (found the hard way: `dbt_sn_dbt_sn_snapshots`).
+
 ## Commands
 
 Both a local `~/.dbt/profiles.yml` and a repo-root `profiles.yml` now exist (see above). dbt looks
