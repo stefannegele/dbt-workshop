@@ -1,0 +1,147 @@
+version: 2
+
+models:
+  - name: stg_orders
+    description: 1:1 view on the raw `orders` table. Renamed, status codes translated.
+    columns:
+      - name: order_id
+        description: Primary key of an order.
+        data_tests:
+          - unique
+          - not_null
+      - name: customer_id
+        description: FK to the customer who placed the order.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_customers')
+                field: customer_id
+      - name: order_status
+        description: Translated order status (open/fulfilled/processing).
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['open', 'fulfilled', 'processing']
+      - name: order_total
+        description: Total value of the order per source.
+      - name: order_date
+        description: Date the order was placed.
+
+  - name: stg_lineitem
+    description: 1:1 view on the raw `lineitem` table. Renamed, no aggregation.
+    columns:
+      - name: order_id
+        description: FK to the related order.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_orders')
+                field: order_id
+      - name: line_number
+        description: Position number within the order.
+        data_tests:
+          - not_null
+      - name: part_id
+        description: FK to the ordered part.
+        data_tests:
+          - not_null
+      - name: supplier_id
+        description: FK to the supplier of this position.
+        data_tests:
+          - not_null
+      - name: quantity
+        description: Ordered quantity of this position.
+      - name: extended_price
+        description: Gross price of the position before discount.
+      - name: discount
+        description: Discount on this position (fraction, e.g. 0.05 = 5%).
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - order_id
+              - line_number
+
+  - name: stg_customers
+    description: 1:1 view on the raw `customer` table. Renamed, segment standardized.
+    columns:
+      - name: customer_id
+        description: Primary key of a customer.
+        data_tests:
+          - unique
+          - not_null
+      - name: name
+        description: Name of the customer.
+      - name: market_segment
+        description: Customer segment per source (trimmed/uppercased).
+      - name: nation_id
+        description: FK to the customer's nation.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_nation')
+                field: nation_id
+
+  - name: stg_nation
+    description: 1:1 view on the raw `nation` table.
+    columns:
+      - name: nation_id
+        description: Primary key of a nation.
+        data_tests:
+          - unique
+          - not_null
+      - name: nation_name
+        description: Name of the nation.
+      - name: region_id
+        description: FK to the nation's region.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_region')
+                field: region_id
+
+  - name: stg_region
+    description: 1:1 view on the raw `region` table.
+    columns:
+      - name: region_id
+        description: Primary key of a region.
+        data_tests:
+          - unique
+          - not_null
+      - name: region_name
+        description: Name of the region.
+
+  - name: stg_part
+    description: 1:1 view on the raw `part` table. Renamed.
+    columns:
+      - name: part_id
+        description: Primary key of a part.
+        data_tests:
+          - unique
+          - not_null
+      - name: manufacturer
+        description: Manufacturer of the part.
+      - name: brand
+        description: Brand of the part.
+      - name: type
+        description: Type/category label of the part.
+
+  - name: stg_supplier
+    description: 1:1 view on the raw `supplier` table. Renamed.
+    columns:
+      - name: supplier_id
+        description: Primary key of a supplier.
+        data_tests:
+          - unique
+          - not_null
+      - name: name
+        description: Name of the supplier.
+      - name: nation
+        description: >
+          Raw nation key of the supplier (not resolved to a name) —
+          dim_suppliers is deliberately kept a slim 1:1 dimension, unlike
+          dim_customers, which fully denormalizes the nation.

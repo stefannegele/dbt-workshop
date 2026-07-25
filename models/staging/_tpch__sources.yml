@@ -1,0 +1,15 @@
+version: 2
+
+sources:
+  - name: tpch
+    database: analytics
+    schema: tpch_workshop
+    description: TPC-H practice dataset for the dbt workshop.
+    tables:
+      - name: customer
+      - name: orders
+      - name: lineitem
+      - name: part
+      - name: supplier
+      - name: nation
+      - name: region

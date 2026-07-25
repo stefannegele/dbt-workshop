@@ -1,0 +1,23 @@
+name: 'dbt_workshop'
+version: '1.0.0'
+config-version: 2
+
+profile: 'dbt_workshop'
+
+model-paths: ["models"]
+macro-paths: ["macros"]
+seed-paths: ["seeds"]
+test-paths: ["tests"]
+
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+models:
+  dbt_workshop:
+    staging:
+      +materialized: view
+    intermediate:
+      +materialized: view
+    marts:
+      +materialized: table

@@ -1,0 +1,17 @@
+# Workshop prep docs (not public)
+docs/
+
+# dbt
+target/
+dbt_packages/
+dbt_internal_packages/
+logs/
+.user.yml
+
+# Python
+.venv/
+__pycache__/
+
+# OS / IDE
+.DS_Store
+.idea/

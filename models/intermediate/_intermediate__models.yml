@@ -1,0 +1,47 @@
+version: 2
+
+models:
+  - name: int_line_items_enriched
+    description: >
+      Line items (stg_lineitem) enriched with order context (stg_orders).
+      Grain: one row per line item — the join multiplies the rows compared
+      to stg_orders (fan-out), so we deliberately test uniqueness on
+      (order_id, line_number), not on order_id alone.
+    columns:
+      - name: order_id
+        data_tests:
+          - not_null
+      - name: line_number
+        data_tests:
+          - not_null
+      - name: customer_id
+        data_tests:
+          - not_null
+      - name: net_amount
+        description: extended_price * (1 - discount), computed via the net_amount macro.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - order_id
+              - line_number
+
+  - name: int_order_totals
+    description: Aggregation of int_line_items_enriched at order grain (one row per order).
+    columns:
+      - name: order_id
+        data_tests:
+          - unique
+          - not_null
+      - name: line_count
+        description: Number of line items in the order.
+      - name: order_net_total
+        description: Sum of the net amounts of all line items in the order.
+
+  - name: int_customers_denormalized
+    description: Customer denormalized wide with nation and region (star instead of snowflake schema).
+    columns:
+      - name: customer_id
+        data_tests:
+          - unique
+          - not_null

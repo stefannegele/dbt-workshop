@@ -1,0 +1,82 @@
+version: 2
+
+models:
+  - name: dim_customers
+    description: "Customer incl. segment, nation, region (denormalized). Grain: one row per customer."
+    columns:
+      - name: customer_id
+        data_tests:
+          - unique
+          - not_null
+
+  - name: dim_parts
+    description: "Part incl. manufacturer, brand, type. Grain: one row per part."
+    columns:
+      - name: part_id
+        data_tests:
+          - unique
+          - not_null
+
+  - name: dim_suppliers
+    description: "Supplier, slim 1:1 dimension. Grain: one row per supplier."
+    columns:
+      - name: supplier_id
+        data_tests:
+          - unique
+          - not_null
+
+  - name: dim_dates
+    description: "Calendar dimension as a date spine over 1992-01-01 to 1999-01-01. One row per day."
+    columns:
+      - name: date_id
+        data_tests:
+          - unique
+          - not_null
+
+  - name: fct_line_items
+    description: >
+      Fact table of line items. Grain: one row per line item
+      (order_id, line_number). Measures: quantity, extended_price, discount, net_amount.
+    columns:
+      - name: customer_id
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_customers')
+                field: customer_id
+      - name: part_id
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_parts')
+                field: part_id
+      - name: supplier_id
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_suppliers')
+                field: supplier_id
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - order_id
+              - line_number
+
+  - name: fct_orders
+    description: "Fact table of orders. Grain: one row per order. Measures: order_total, line_count."
+    columns:
+      - name: order_id
+        data_tests:
+          - unique
+          - not_null
+      - name: customer_id
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_customers')
+                field: customer_id
