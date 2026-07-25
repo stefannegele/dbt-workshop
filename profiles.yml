@@ -5,8 +5,8 @@ dbt_workshop:
       type: snowflake
       account: 'not needed'
       user: 'not needed'
-      role: ACCOUNTADMIN
-      database: analytics
-      warehouse: WORKSHOP_WH
-      schema: dbt_sn
-      threads: 8
+      role: <your_role_name>
+      database: <your_database_name>
+      warehouse: <your_warehouse_name>
+      schema: <your_schema_name>
+      threads: 4
