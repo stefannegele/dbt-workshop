@@ -6,8 +6,16 @@ Snowflake). Builds a star schema from the TPC-H practice dataset
 
 ## Environment
 
-- Project name: `dbt_workshop`, profile: `dbt_workshop` (in `~/.dbt/profiles.yml`, not in the repo)
-- Target schema for local development: `analytics.dbt_sn`
+- Project name: `dbt_workshop`, profile: `dbt_workshop`
+- Target schema: `analytics.dbt_sn`
+- **Two `profiles.yml` files exist, for two different execution contexts:**
+  - `~/.dbt/profiles.yml` (local machine, **not** in the repo) — real key-pair auth, used by the
+    local venv/CLI below.
+  - `profiles.yml` (repo root, **committed**) — used by **dbt Projects on Snowflake** when this
+    repo is imported/run inside Snowflake (Workspaces or `EXECUTE DBT PROJECT`). Snowflake requires
+    this file to be present in the project folder to know which warehouse/database/schema/role to
+    target. It's safe to commit: `account`/`user` are placeholder strings ("not needed") — execution
+    runs under the current Snowflake session's account/user context, not via these fields.
 - Source: `analytics.tpch_workshop` (`customer`, `orders`, `lineitem`, `part`, `supplier`, `nation`, `region`)
 - Python venv under `.venv/` (`uv venv --python 3.12` — Fusion/dbt-core need Python ≤3.12, system Python is newer)
 - Auth: Snowflake key pair, PKCS#8 (no password, no SSO — the account has no SAML federation configured)
@@ -51,9 +59,13 @@ files per folder.
 
 ## Commands
 
+Both a local `~/.dbt/profiles.yml` and a repo-root `profiles.yml` now exist (see above). dbt looks
+in the current directory *before* `~/.dbt/`, so local runs must pin `--profiles-dir ~/.dbt`
+explicitly — otherwise dbt picks up the committed repo-root file (no real credentials) and fails.
+
 ```bash
-.venv/bin/dbt debug
-.venv/bin/dbt deps
-.venv/bin/dbt build
-.venv/bin/dbt build --select <model>+   # targeted development
+.venv/bin/dbt debug --profiles-dir ~/.dbt
+.venv/bin/dbt deps  --profiles-dir ~/.dbt
+.venv/bin/dbt build --profiles-dir ~/.dbt
+.venv/bin/dbt build --profiles-dir ~/.dbt --select <model>+   # targeted development
 ```

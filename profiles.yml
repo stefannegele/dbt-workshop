@@ -1,0 +1,12 @@
+dbt_workshop:
+  target: dev
+  outputs:
+    dev:
+      type: snowflake
+      account: 'not needed'
+      user: 'not needed'
+      role: ACCOUNTADMIN
+      database: analytics
+      warehouse: WORKSHOP_WH
+      schema: dbt_sn
+      threads: 8
