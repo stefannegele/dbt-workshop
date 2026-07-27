@@ -4,6 +4,14 @@ dbt project to prepare an internal dbt workshop (audience: Oracle/PL-SQL team mo
 Snowflake). Builds a star schema from the TPC-H practice dataset
 (`analytics.tpch_workshop`) across the staging → intermediate → marts layers.
 
+**Branch structure:** the active `models/` directory here only contains the same starting point
+as `main` (`stg_orders.sql` as a plain passthrough). The full worked solution — the rest of
+staging, all of intermediate/marts, the Part 4 tests, the Part 5 snapshot, and the `net_amount`
+macro — lives under `_solutions/` (mirroring the normal `models/`, `tests/`, `snapshots/`,
+`macros/` layout) purely as reference material. `_solutions/` is **not** one of dbt's
+model/test/snapshot/macro-paths, so dbt never parses or builds anything in it; `dbt build` here
+behaves exactly like on `main`.
+
 ## Environment
 
 - Project name: `dbt_workshop`, profile: `dbt_workshop`
@@ -39,8 +47,8 @@ Snowflake). Builds a star schema from the TPC-H practice dataset
 ## Reuse
 
 - Result needed in multiple places → build as a model, reference via `{{ ref() }}`
-  (e.g. `net_amount` lives once in `int_line_items_enriched`).
-- Same formula on different columns → macro (e.g. `macros/net_amount.sql`).
+  (e.g. `net_amount` lives once in `int_line_items_enriched`, see `_solutions/`).
+- Same formula on different columns → macro (e.g. `_solutions/macros/net_amount.sql`).
 - **Rule of Three:** don't extract into a macro prematurely — only once the same logic shows up
   a third time. Readable SQL beats clever Jinja.
 
@@ -61,15 +69,15 @@ Two test types, matching the workshop's Part 4:
   Declared in the `_*.yml` files next to each layer's models. Every model has at least
   `not_null`/`unique` on its primary key; FKs get `relationships` tests against the respective
   dimension/staging source.
-- **Singular tests (SQL)** — one-off `.sql` files under `tests/` for checks a generic test can't
-  express: aggregation across rows, business-formula reconciliation, gap detection. A query that
-  returns rows on failure, empty on success.
+- **Singular tests (SQL)** — one-off `.sql` files under `tests/` (`_solutions/tests/` here) for
+  checks a generic test can't express: aggregation across rows, business-formula reconciliation,
+  gap detection. A query that returns rows on failure, empty on success.
 - Before writing a singular test, check whether a generic/package test already covers it (e.g.
   `dbt_utils.equal_rowcount` instead of a hand-rolled row-count comparison) — same
   reuse-before-rebuild principle as the `net_amount` macro.
 - **`net_amount` is tax-exclusive by design; `order_total` (TPC-H `o_totalprice`) isn't.**
   `stg_lineitem.tax` (`l_tax`) exists only to reconcile the two in
-  `tests/assert_order_total_matches_line_items.sql`, via the tax-inclusive `charge` formula
+  `_solutions/tests/assert_order_total_matches_line_items.sql`, via the tax-inclusive `charge` formula
   (`extended_price * (1 - discount) * (1 + tax)`) — not to feed `net_amount`/`fct_line_items`.
   That test's tolerance (`> 0.20`) is tuned above the observed floating-point rounding noise from
   summing multiple lines per order (max ~$0.11 across all 1.5M orders); a real defect (e.g. a
@@ -79,7 +87,7 @@ Descriptions live in the accompanying `_*.yml` files per folder.
 
 ## Snapshots
 
-`snapshots/snap_customers.yml` (Part 5, optional) snapshots `market_segment` as SCD Type 2 —
+`_solutions/snapshots/snap_customers.yml` (Part 5, optional) snapshots `market_segment` as SCD Type 2 —
 demonstrates that overwriting a dimension value (Type 1) silently rewrites history for old facts.
 Snapshots the **raw source** (`source('tpch', 'customer')`), not `stg_customers`: decouples
 snapshot history from staging-logic changes, at the cost of raw column names (`c_custkey`,
